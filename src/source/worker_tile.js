@@ -13,6 +13,7 @@ const {makeGlyphAtlas} = require('../render/glyph_atlas');
 import type TileCoord from './tile_coord';
 import type {Bucket} from '../data/bucket';
 import type Actor from '../util/actor';
+import type StyleLayer from '../style/style_layer';
 import type StyleLayerIndex from '../style/style_layer_index';
 import type {StyleImage} from '../style/style_image';
 import type {StyleGlyph} from '../style/style_glyph';
@@ -96,9 +97,7 @@ class WorkerTile {
                 if (layer.maxzoom && this.zoom >= layer.maxzoom) continue;
                 if (layer.visibility === 'none') continue;
 
-                for (const layer of family) {
-                    layer.recalculate(this.zoom);
-                }
+                recalculateLayers(family, this.zoom);
 
                 const bucket = buckets[layer.id] = layer.createBucket({
                     index: featureIndex.bucketLayerIDs.length,
@@ -164,8 +163,7 @@ class WorkerTile {
                 const imageAtlas = makeImageAtlas(imageMap);
 
                 for (const bucket of this.symbolBuckets) {
-                    recalculateLayers(bucket, this.zoom);
-
+                    recalculateLayers(bucket.layers, this.zoom);
                     performSymbolLayout(bucket, glyphMap, glyphAtlas.positions, imageMap, imageAtlas.positions, this.showCollisionBoxes);
                 }
 
@@ -188,10 +186,19 @@ class WorkerTile {
     }
 }
 
-function recalculateLayers(bucket: SymbolBucket, zoom: number) {
+function recalculateLayers(layers: $ReadOnlyArray<StyleLayer>, zoom: number) {
     // Layers are shared and may have been used by a WorkerTile with a different zoom.
-    for (const layer of bucket.layers) {
-        layer.recalculate(zoom);
+    for (const layer of layers) {
+        layer.recalculate({
+            zoom,
+            now: Number.MAX_VALUE,
+            defaultFadeDuration: 0,
+            zoomHistory: {
+                lastIntegerZoom: 0,
+                lastIntegerZoomTime: 0,
+                lastZoom: 0
+            }
+        });
     }
 }
 

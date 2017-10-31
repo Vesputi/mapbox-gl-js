@@ -2,11 +2,10 @@
 
 const Point = require('@mapbox/point-geometry');
 
-import type StyleLayer from './style_layer';
-
-function getMaximumPaintValue(property: string, layer: StyleLayer, bucket: *) {
-    if (layer.isPaintValueFeatureConstant(property)) {
-        return layer.paint[property];
+function getMaximumPaintValue(property: string, layer: *, bucket: *) {
+    const value = layer.paint.get(property);
+    if (value.isFeatureConstant()) {
+        return value;
     } else {
         return bucket.programConfigurations.get(layer.id)
             .paintPropertyStatistics[property].max;
