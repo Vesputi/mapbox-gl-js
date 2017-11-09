@@ -3,6 +3,7 @@
 // Note: all "sizes" are measured in bytes
 
 const assert = require('assert');
+const isEvalSupported = require('./eval_support');
 
 module.exports = createStructArrayType;
 
@@ -77,6 +78,8 @@ export type StructArrayTypeParameters = {
     }>,
     alignment?: number
 };
+
+
 
 /**
  * The StructArray class is inherited by the custom StructArrayType classes created with
@@ -230,6 +233,18 @@ export type { StructArray as StructArray };
 
 const structArrayTypeCache: {[key: string]: Class<StructArray>} = {};
 
+const createEmplaceBack = isEvalSupported ?
+    createEmplaceBackWithEval :
+    createEmplaceBackWithoutEval;
+const createIndexedMemberComponentGetter = isEvalSupported ?
+    createIndexedMemberComponentGetterWithEval :
+    createIndexedMemberComponentGetterWithoutEval;
+const createAccessors = isEvalSupported ?
+    createAccessorsWithEval :
+    createAccessorsWithoutEval;
+
+
+
 /**
  * `createStructArrayType` is used to create new `StructArray` types.
  *
@@ -368,7 +383,7 @@ function getArrayViewName(type: ViewType): string {
  * > elementIndex to i) (likely due to v8 inlining heuristics).
  * - lucaswoj
  */
-function createEmplaceBack(members, bytesPerElement): Function {
+function createEmplaceBackWithEval(members, bytesPerElement): Function {
     const usedTypeSizes = [];
     const argNames = [];
     let body =
@@ -404,6 +419,45 @@ function createEmplaceBack(members, bytesPerElement): Function {
     return new Function(argNames.toString(), body);
 }
 
+function createEmplaceBackWithoutEval(members, bytesPerElement): Function {
+    const views = [];
+    const sizes = [];
+    const offsets = [];
+    for (const member of members) {
+        const size = sizeOf(member.type);
+        for (let c = 0; c < member.components; c++) {
+            views.push(getArrayViewName(member.type));
+            sizes.push(Math.floor(bytesPerElement / sizeOf(member.type)));
+            offsets.push(Math.floor(member.offset / size + c));
+        }
+    }
+
+    return function emplaceBack() {
+        const i = this.length;
+        this.resize(this.length + 1);
+        for (let arg = 0; arg < arguments.length; arg++) {
+            this[views[arg]][i * sizes[arg] + offsets[arg]] = arguments[arg];
+        }
+        return i;
+    };
+}
+
+function createIndexedMemberComponentGetterWithEval(member, component, size) {
+    const componentOffset = (member.offset / sizeOf(member.type) + component).toFixed(0);
+    const componentStride = size / sizeOf(member.type);
+    return new Function('index',
+        `return this.${getArrayViewName(member.type)}[index * ${componentStride} + ${componentOffset}];`);
+}
+
+function createIndexedMemberComponentGetterWithoutEval(member, component, size) {
+    const arrayViewName = getArrayViewName(member.type);
+    const componentOffset = (member.offset / sizeOf(member.type) + component).toFixed(0);
+    const componentStride = size / sizeOf(member.type);
+    return function indexedMemberComponentGetter(index) {
+        return this[arrayViewName][index * componentStride + componentOffset];
+    };
+}
+
 function createMemberComponentString(member, component) {
     const elementOffset = `this._pos${sizeOf(member.type).toFixed(0)}`;
     const componentOffset = (member.offset / sizeOf(member.type) + component).toFixed(0);
@@ -411,17 +465,24 @@ function createMemberComponentString(member, component) {
     return `this._structArray.${getArrayViewName(member.type)}[${index}]`;
 }
 
-function createIndexedMemberComponentGetter(member, component, size) {
-    const componentOffset = (member.offset / sizeOf(member.type) + component).toFixed(0);
-    const componentStride = size / sizeOf(member.type);
-    return new Function('index',
-        `return this.${getArrayViewName(member.type)}[index * ${componentStride} + ${componentOffset}];`);
-}
-
-function createAccessors(member, c) {
+function createAccessorsWithEval(member, c) {
     const code = createMemberComponentString(member, c);
     return {
         get: new Function(`return ${code};`),
         set: new Function('x', `${code} = x;`)
+    };
+}
+
+function createAccessorsWithoutEval(member, component) {
+    const elementOffset = `_pos${sizeOf(member.type).toFixed(0)}`;
+    const componentOffset = Math.floor(member.offset / sizeOf(member.type) + component);
+    const arrayViewName = getArrayViewName(member.type);
+    return {
+        get: function getter() {
+            return this._structArray[arrayViewName][this[elementOffset] + componentOffset];
+        },
+        set: function setter(x) {
+            this._structArray[arrayViewName][this[elementOffset] + componentOffset] = x;
+        }
     };
 }
