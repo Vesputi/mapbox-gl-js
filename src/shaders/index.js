@@ -14,6 +14,10 @@ const shaders: {[string]: {fragmentSource: string, vertexSource: string}} = {
         fragmentSource: fs.readFileSync(__dirname + '/../shaders/circle.fragment.glsl', 'utf8'),
         vertexSource: fs.readFileSync(__dirname + '/../shaders/circle.vertex.glsl', 'utf8')
     },
+    'fixed-line': {
+        fragmentSource: fs.readFileSync(__dirname + '/../shaders/fixed_line.fragment.glsl', 'utf8'),
+        vertexSource: fs.readFileSync(__dirname + '/../shaders/fixed_line.vertex.glsl', 'utf8')
+    },
     heatmap: {
         fragmentSource: fs.readFileSync(__dirname + '/../shaders/heatmap.fragment.glsl', 'utf8'),
         vertexSource: fs.readFileSync(__dirname + '/../shaders/heatmap.vertex.glsl', 'utf8')

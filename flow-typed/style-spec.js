@@ -267,6 +267,34 @@ declare type CircleLayerSpecification = {|
     |}
 |}
 
+declare type FixedLineLayerSpecification = {|
+    "id": string,
+    "type": "fixed-line",
+    "metadata"?: mixed,
+    "source": string,
+    "source-layer"?: string,
+    "minzoom"?: number,
+    "maxzoom"?: number,
+    "filter"?: FilterSpecification,
+    "layout"?: {|
+        "fixed-line-radius"?: DataDrivenPropertyValueSpecification<number>,
+        "fixed-line-offset"?: DataDrivenPropertyValueSpecification<number>,
+        "fixed-line-color"?: DataDrivenPropertyValueSpecification<ColorSpecification>,
+        "fixed-line-blur"?: DataDrivenPropertyValueSpecification<number>,
+        "fixed-line-opacity"?: DataDrivenPropertyValueSpecification<number>,
+        "fixed-line-translate"?: PropertyValueSpecification<[number, number]>,
+        "fixed-line-translate-anchor"?: PropertyValueSpecification<"map" | "viewport">,
+        "fixed-line-pitch-scale"?: PropertyValueSpecification<"map" | "viewport">,
+        "fixed-line-pitch-alignment"?: PropertyValueSpecification<"map" | "viewport">,
+        "fixed-line-stroke-width"?: DataDrivenPropertyValueSpecification<number>,
+        "fixed-line-stroke-color"?: DataDrivenPropertyValueSpecification<ColorSpecification>,
+        "fixed-line-stroke-opacity"?: DataDrivenPropertyValueSpecification<number>
+    |},
+    "paint"?: {|
+        "visibility"?: "visible" | "none"
+    |}
+|}
+
 declare type FillExtrusionLayerSpecification = {|
     "id": string,
     "type": "fill-extrusion",
@@ -334,6 +362,7 @@ declare type LayerSpecification =
     | LineLayerSpecification
     | SymbolLayerSpecification
     | CircleLayerSpecification
+    | FixedLineLayerSpecification
     | FillExtrusionLayerSpecification
     | RasterLayerSpecification
     | BackgroundLayerSpecification;

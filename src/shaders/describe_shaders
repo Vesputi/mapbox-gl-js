@@ -17,12 +17,14 @@ const AnimationLoop = require('../style/animation_loop');
 
 const fillProgramInterface = require('../data/bucket/fill_bucket').programInterface;
 const circleProgramInterface = require('../data/bucket/circle_bucket').programInterface;
+const fixedLineProgramInterface = require('../data/bucket/fixed_line_bucket').programInterface;
 const lineProgramInterface = require('../data/bucket/line_bucket').programInterface;
 const fillExtrusionProgramInterface = require('../data/bucket/fill_extrusion_bucket').programInterface;
 
 const programInterfaces = util.extend({
     fill: fillProgramInterface,
     circle: circleProgramInterface,
+    fixed-line: fixedLineProgramInterface,
     line: lineProgramInterface,
     fillExtrusion: fillExtrusionProgramInterface,
 }, require('../data/bucket/symbol_bucket').programInterfaces);

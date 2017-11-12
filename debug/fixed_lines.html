@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapbox GL JS debug page</title>
+    <meta charset='utf-8'>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel='stylesheet' href='/dist/mapbox-gl.css' />
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map { height: 100%; }
+    </style>
+</head>
+
+<body>
+<div id='map'></div>
+
+<script src='/dist/mapbox-gl-dev.js'></script>
+<script src='/debug/access_token_generated.js'></script>
+<script>
+
+var map = window.map = new mapboxgl.Map({
+    container: 'map',
+    zoom: 3,
+    center: [-77.01866, 38.888],
+    style: 'mapbox://styles/mapbox/streets-v9',
+    hash: true
+});
+
+map.addControl(new mapboxgl.NavigationControl());
+map.addControl(new mapboxgl.GeolocateControl());
+
+map.on('load', function() {
+
+    map.addSource('fixed-lines', {
+        "type": "geojson",
+        "data": "/test/integration/data/places.geojson"
+    });
+
+    map.addLayer({
+        "id": "fixed-lines",
+        "type": "fixed-line",
+        "source": "fixed-lines",
+        "paint": {
+            "fixed-line-stroke-width": 5,
+            "fixed-line-stroke-color": "black",
+            "fixed-line-radius": 20,
+            "fixed-line-offset": 10,
+            "fixed-line-color": "red"
+        }
+    });
+    map.addLayer({
+        "id": "fixed-lines-1",
+        "type": "fixed-line",
+        "source": "fixed-lines",
+        "paint": {
+            "fixed-line-stroke-width": 5,
+            "fixed-line-stroke-color": "black",
+            "fixed-line-radius": 20,
+            "fixed-line-offset": 10,
+            "fixed-line-color": "blue"
+        }
+    });
+    map.addLayer({
+        "id": "fixed-lines-2",
+        "type": "fixed-line",
+        "source": "fixed-lines",
+        "paint": {
+            "fixed-line-stroke-width": 5,
+            "fixed-line-stroke-color": "black",
+            "fixed-line-radius": 20,
+            "fixed-line-offset": 10,
+            "fixed-line-color": "green"
+        }
+    });
+
+    map.addLayer({
+        "id": "labels",
+        "type": "symbol",
+        "source": "fixed-lines",
+        "minzoom": 1,
+        "layout": {
+            "text-field": [
+                "concat",
+                ["get", "name"],
+                " (",
+                [
+                    "coalesce",
+                    ["get", "subregion"],
+                    ["get", "region"]
+                ],
+                ")"
+            ]
+        }
+    });
+});
+
+</script>
+</body>
+</html>

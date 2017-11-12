@@ -20,6 +20,7 @@ const updateTileMasks = require('./tile_mask');
 const draw = {
     symbol: require('./draw_symbol'),
     circle: require('./draw_circle'),
+    'fixed-line': require('./draw_fixed_line'),
     heatmap: require('./draw_heatmap'),
     line: require('./draw_line'),
     fill: require('./draw_fill'),
