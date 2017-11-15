@@ -29,69 +29,81 @@ var map = window.map = new mapboxgl.Map({
 map.addControl(new mapboxgl.NavigationControl());
 map.addControl(new mapboxgl.GeolocateControl());
 
+var degree2radians = function(degree){
+  return (degree * Math.PI) / 180;
+}
+
+var radians2degree = function(radians){
+  return (radians * 180) / Math.PI;
+}
+
 map.on('load', function() {
 
-    map.addSource('fixed-lines', {
+    map.addSource('crossover_positions', {
         "type": "geojson",
-        "data": "/test/integration/data/places.geojson"
+        "data": "/test/integration/data/crossovers.geojson"
+    });
+
+    var offset_and_angle_to_line_properties = function(angle_in, offset_in, angle_out, offset_out){
+      var angle_north_to_offset_in = degree2radians(angle_in) - Math.asin(offset_in / radius);
+      var angle_north_to_offset_out = degree2radians(angle_out) + Math.asin(-1.0*offset_out / radius);
+      var angle_of_line = angle_north_to_offset_out - (angle_north_to_offset_out-angle_north_to_offset_in)/2;
+      var offset_of_line = Math.cos(angle_north_to_offset_out - angle_of_line)*radius;
+      return {angle: radians2degree(angle_of_line) - 90, offset: -1.0*offset_of_line}
+    }
+
+
+    // var addition = 12;
+    var offset_in = 0;
+    var angle_in = 0;
+    var offset_out = 0;
+    var angle_out = 90;
+    var radius = 20;
+
+    var line_properties = offset_and_angle_to_line_properties(angle_in, offset_in, angle_out, offset_out);
+
+    map.addLayer({
+      id: 'segment_route_real_crossover_debug',
+      type: 'circle',
+      source: 'crossover_positions',
+      filter: ['==', 'debug_crossover', true],
+      paint:{
+        'circle-radius': 20,
+        'circle-opacity': 1,
+        'circle-color': "white"
+      }
     });
 
     map.addLayer({
-        "id": "fixed-lines",
-        "type": "fixed-line",
-        "source": "fixed-lines",
-        "paint": {
-            "fixed-line-stroke-width": 5,
-            "fixed-line-stroke-color": "black",
-            "fixed-line-radius": 20,
-            "fixed-line-offset": 10,
-            "fixed-line-color": "red"
+      id: "crossover_line",
+      type: 'fixed-line',
+      source: 'crossover_positions',
+      filter: ['==', 'debug_crossover', false],
+      paint: {
+        "fixed-line-stroke-width":{
+          type: 'identity',
+          property: 'line_width'
+        },
+        "fixed-line-radius":{
+          type: 'identity',
+          property: 'radius'
+        },
+        "fixed-line-offset":{
+          type: 'identity',
+          property: 'line_offset'
+        },
+        "fixed-line-angle":{
+          type: 'identity',
+          property: 'line_angle'
+        },
+        "fixed-line-color":{
+          type: 'identity',
+          property: 'line_color'
         }
-    });
-    map.addLayer({
-        "id": "fixed-lines-1",
-        "type": "fixed-line",
-        "source": "fixed-lines",
-        "paint": {
-            "fixed-line-stroke-width": 5,
-            "fixed-line-stroke-color": "black",
-            "fixed-line-radius": 20,
-            "fixed-line-offset": 10,
-            "fixed-line-color": "blue"
-        }
-    });
-    map.addLayer({
-        "id": "fixed-lines-2",
-        "type": "fixed-line",
-        "source": "fixed-lines",
-        "paint": {
-            "fixed-line-stroke-width": 5,
-            "fixed-line-stroke-color": "black",
-            "fixed-line-radius": 20,
-            "fixed-line-offset": 10,
-            "fixed-line-color": "green"
-        }
+      }
     });
 
-    map.addLayer({
-        "id": "labels",
-        "type": "symbol",
-        "source": "fixed-lines",
-        "minzoom": 1,
-        "layout": {
-            "text-field": [
-                "concat",
-                ["get", "name"],
-                " (",
-                [
-                    "coalesce",
-                    ["get", "subregion"],
-                    ["get", "region"]
-                ],
-                ")"
-            ]
-        }
-    });
+
 });
 
 </script>

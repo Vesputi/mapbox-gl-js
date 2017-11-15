@@ -279,6 +279,8 @@ declare type FixedLineLayerSpecification = {|
     "layout"?: {|
         "fixed-line-radius"?: DataDrivenPropertyValueSpecification<number>,
         "fixed-line-offset"?: DataDrivenPropertyValueSpecification<number>,
+        "fixed-line-offset-direction"?: DataDrivenPropertyValueSpecification<number>,
+        "fixed-line-angle"?: DataDrivenPropertyValueSpecification<number>,
         "fixed-line-color"?: DataDrivenPropertyValueSpecification<ColorSpecification>,
         "fixed-line-blur"?: DataDrivenPropertyValueSpecification<number>,
         "fixed-line-opacity"?: DataDrivenPropertyValueSpecification<number>,
@@ -366,4 +368,3 @@ declare type LayerSpecification =
     | FillExtrusionLayerSpecification
     | RasterLayerSpecification
     | BackgroundLayerSpecification;
-

@@ -9,6 +9,8 @@ attribute vec2 a_pos;
 #pragma mapbox: define highp vec4 color
 #pragma mapbox: define mediump float radius
 #pragma mapbox: define mediump float offset
+#pragma mapbox: define mediump float offset_direction
+#pragma mapbox: define mediump float angle
 #pragma mapbox: define lowp float blur
 #pragma mapbox: define lowp float opacity
 #pragma mapbox: define highp vec4 stroke_color
@@ -21,6 +23,8 @@ void main(void) {
     #pragma mapbox: initialize highp vec4 color
     #pragma mapbox: initialize mediump float radius
     #pragma mapbox: initialize mediump float offset
+    #pragma mapbox: initialize mediump float offset_direction
+    #pragma mapbox: initialize mediump float angle
     #pragma mapbox: initialize lowp float blur
     #pragma mapbox: initialize lowp float opacity
     #pragma mapbox: initialize highp vec4 stroke_color

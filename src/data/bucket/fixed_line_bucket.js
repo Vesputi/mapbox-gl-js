@@ -25,6 +25,8 @@ const fixedLineInterface = {
         {property: 'fixed-line-color'},
         {property: 'fixed-line-radius'},
         {property: 'fixed-line-offset'},
+        {property: 'fixed-line-offset-direction'},
+        {property: 'fixed-line-angle'},
         {property: 'fixed-line-blur'},
         {property: 'fixed-line-opacity'},
         {property: 'fixed-line-stroke-color'},

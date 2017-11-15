@@ -3093,7 +3093,6 @@
     "fixed-line-offset": {
       "type": "number",
       "default": 0,
-      "minimum": 0,
       "function": "interpolated",
       "zoom-function": true,
       "property-function": true,
@@ -3102,16 +3101,48 @@
       "doc": "Offset of fixed_line center to circle center.",
       "sdk-support": {
         "basic functionality": {
-          "js": "0.10.0",
-          "android": "2.0.1",
-          "ios": "2.0.0",
-          "macos": "0.1.0"
+          "js": "0.41.0"
         },
         "data-driven styling": {
-          "js": "0.18.0",
-          "android": "5.0.0",
-          "ios": "3.5.0",
-          "macos": "0.4.0"
+          "js": "0.41.0"
+        }
+      }
+    },
+    "fixed-line-offset-direction": {
+      "type": "number",
+      "default": 0,
+      "period": 360,
+      "function": "interpolated",
+      "zoom-function": true,
+      "property-function": true,
+      "transition": true,
+      "units": "pixels",
+      "doc": "direction in which the Offset of fixed_line is moved from center.",
+      "sdk-support": {
+        "basic functionality": {
+          "js": "0.41.0"
+        },
+        "data-driven styling": {
+          "js": "0.41.0"
+        }
+      }
+    },
+    "fixed-line-angle": {
+      "type": "number",
+      "default": 0,
+      "period": 360,
+      "function": "interpolated",
+      "zoom-function": true,
+      "property-function": true,
+      "transition": true,
+      "units": "pixels",
+      "doc": "Angle in which fixed_line is turned.",
+      "sdk-support": {
+        "basic functionality": {
+          "js": "0.41.0"
+        },
+        "data-driven styling": {
+          "js": "0.41.0"
         }
       }
     },
