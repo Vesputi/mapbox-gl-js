@@ -25,31 +25,22 @@ void main() {
 
     // float offset = 50.0;
     float angle_rad = radians(angle);
-    float full_radius = radius + stroke_width;
 
     vec2 extrude = v_data.xy;
-    float distance_of_mid_line_to_center = offset/full_radius;
+    float offset_local_coordinates = offset/radius;
+    float stroke_width_local_coordinates = stroke_width/radius;
 
-    float distance_to_mid_line = cos(angle_rad)*extrude.x + sin(angle_rad)*extrude.y;
+    float width_extrude_length = cos(angle_rad)*extrude.x + sin(angle_rad)*extrude.y;
     float extrude_length = length(extrude);
 
     lowp float antialiasblur = v_data.z;
-    float antialiased_blur = -max(blur, antialiasblur);
+    float antialiased_blur = max(blur, antialiasblur);
 
-    float opacity_t = 0.0;
+    float opacity_of_length = 1.0-smoothstep(1.0 - max(blur, antialiasblur), 1.0, extrude_length);
 
-    if(abs(distance_to_mid_line + distance_of_mid_line_to_center) < 0.5*stroke_width/full_radius){
-      opacity_t = smoothstep(0.0, antialiased_blur, extrude_length - 1.0);
-      // opacity_t  = 1.0;
-    }
+    float opacity_of_width = smoothstep(0.0, 0.0 - max(blur, antialiasblur), abs(width_extrude_length + offset_local_coordinates) - 0.5*stroke_width_local_coordinates);
 
-    float color_t = (stroke_width < 0.01) ? 0.0 : smoothstep(
-        antialiased_blur,
-        0.0,
-        extrude_length - radius / full_radius
-    );
-
-    gl_FragColor = opacity_t * mix(color * opacity, stroke_color * 0.0, color_t);
+    gl_FragColor = opacity_of_length * opacity_of_width * color * opacity;
 
 #ifdef OVERDRAW_INSPECTOR
     gl_FragColor = vec4(1.0);

@@ -40,13 +40,13 @@ void main(void) {
     if (u_pitch_with_map) {
         vec2 corner_position = circle_center;
         if (u_scale_with_map) {
-            corner_position += extrude * (radius + stroke_width) * u_extrude_scale;
+            corner_position += extrude * radius * u_extrude_scale;
         } else {
             // Pitching the circle with the map effectively scales it with the map
             // To counteract the effect for pitch-scale: viewport, we rescale the
             // whole circle based on the pitch scaling effect at its central point
             vec4 projected_center = u_matrix * vec4(circle_center, 0, 1);
-            corner_position += extrude * (radius + stroke_width) * u_extrude_scale * (projected_center.w / u_camera_to_center_distance);
+            corner_position += extrude * radius * u_extrude_scale * (projected_center.w / u_camera_to_center_distance);
         }
 
         gl_Position = u_matrix * vec4(corner_position, 0, 1);
@@ -54,16 +54,16 @@ void main(void) {
         gl_Position = u_matrix * vec4(circle_center, 0, 1);
 
         if (u_scale_with_map) {
-            gl_Position.xy += extrude * (radius + stroke_width) * u_extrude_scale * u_camera_to_center_distance;
+            gl_Position.xy += extrude * radius * u_extrude_scale * u_camera_to_center_distance;
         } else {
-            gl_Position.xy += extrude * (radius + stroke_width) * u_extrude_scale * gl_Position.w;
+            gl_Position.xy += extrude * radius * u_extrude_scale * gl_Position.w;
         }
     }
 
     // This is a minimum blur distance that serves as a faux-antialiasing for
     // the circle. since blur is a ratio of the circle's size and the intent is
     // to keep the blur at roughly 1px, the two are inversely related.
-    lowp float antialiasblur = 1.0 / DEVICE_PIXEL_RATIO / (radius + stroke_width);
+    lowp float antialiasblur = 1.0 / DEVICE_PIXEL_RATIO / radius;
 
     v_data = vec3(extrude.x, extrude.y, antialiasblur);
 }
