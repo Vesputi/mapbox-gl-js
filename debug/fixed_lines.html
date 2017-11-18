@@ -66,10 +66,12 @@ map.on('load', function() {
       id: 'segment_route_real_crossover_debug',
       type: 'circle',
       source: 'crossover_positions',
-      filter: ['==', 'debug_crossover', true],
       paint:{
-        'circle-radius': 20,
-        'circle-opacity': 1,
+        'circle-radius': {
+          type: 'identity',
+          property: 'radius'
+        },
+        'circle-opacity': 0.3,
         'circle-color': "white"
       }
     });
@@ -78,7 +80,6 @@ map.on('load', function() {
       id: "crossover_line",
       type: 'fixed-line',
       source: 'crossover_positions',
-      filter: ['==', 'debug_crossover', false],
       paint: {
         "fixed-line-stroke-width":{
           type: 'identity',
