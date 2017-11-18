@@ -36,9 +36,9 @@ void main() {
     lowp float antialiasblur = v_data.z;
     float antialiased_blur = max(blur, antialiasblur);
 
-    float opacity_of_length = 1.0-smoothstep(1.0 - max(blur, antialiasblur), 1.0, extrude_length);
+    float opacity_of_length = 1.0-smoothstep(1.0 - antialiased_blur, 1.0, extrude_length);
 
-    float opacity_of_width = smoothstep(0.0, 0.0 - max(blur, antialiasblur), abs(width_extrude_length + offset_local_coordinates) - 0.5*stroke_width_local_coordinates);
+    float opacity_of_width = smoothstep(0.0 + antialiased_blur/2.0, 0.0 - antialiased_blur/2.0, abs(width_extrude_length + offset_local_coordinates) - 0.5*stroke_width_local_coordinates);
 
     gl_FragColor = opacity_of_length * opacity_of_width * color * opacity;
 
