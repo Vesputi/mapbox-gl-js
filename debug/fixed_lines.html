@@ -44,6 +44,11 @@ map.on('load', function() {
         "data": "/test/integration/data/crossovers.geojson"
     });
 
+    map.addSource('segments', {
+        "type": "geojson",
+        "data": "/test/integration/data/segments.geojson"
+    });
+
     var offset_and_angle_to_line_properties = function(angle_in, offset_in, angle_out, offset_out){
       var angle_north_to_offset_in = degree2radians(angle_in) - Math.asin(offset_in / radius);
       var angle_north_to_offset_out = degree2radians(angle_out) + Math.asin(-1.0*offset_out / radius);
@@ -62,19 +67,64 @@ map.on('load', function() {
 
     var line_properties = offset_and_angle_to_line_properties(angle_in, offset_in, angle_out, offset_out);
 
-    map.addLayer({
-      id: 'segment_route_real_crossover_debug',
-      type: 'circle',
-      source: 'crossover_positions',
-      paint:{
-        'circle-radius': {
-          type: 'identity',
-          property: 'radius'
+    // map.addLayer({
+    //   id: 'segment_route_real_crossover_debug',
+    //   type: 'circle',
+    //   source: 'crossover_positions',
+    //   paint:{
+    //     'circle-radius': {
+    //       type: 'identity',
+    //       property: 'radius'
+    //     },
+    //     'circle-opacity': 0.3,
+    //     'circle-color': "white"
+    //   }
+    // });
+
+    map.addLayer(
+      {
+        "id":"segment_route_topogram_tram",
+        "type":"line",
+        "source":"segments",
+        "layout":{
+          "line-cap":"round",
+          "line-start-cutting-radius":{
+            "type":"identity",
+            "property":"start_cutting_radius"
+          },
+          "line-end-cutting-radius":{
+            "type":"identity",
+            "property":"end_cutting_radius"
+          },
         },
-        'circle-opacity': 0.3,
-        'circle-color': "white"
+        "paint":{
+          "line-color":{
+            "type":"identity",
+            "property":"route_color"
+          },
+          "line-offset":{
+            "type":"identity",
+            "property":"route_offset_normal"
+          },
+          "line-width":{
+            "type":"identity",
+            "property":"route_width_normal"
+          },
+        }
       }
-    });
+    );
+
+    // map.addLayer(
+    //   {
+    //     "id":"segment_route_topogram_tram_name",
+    //     "type":"symbol",
+    //     "source":"segments",
+    //     "layout":{
+    //       "text-field":"{id}",
+    //       "text-allow-overlap": true,
+    //     },
+    //   }
+    // );
 
     map.addLayer({
       id: "crossover_line",

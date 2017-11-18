@@ -14,6 +14,7 @@
 
 attribute vec4 a_pos_normal;
 attribute vec4 a_data;
+attribute float cutting_radius;
 
 uniform mat4 u_matrix;
 uniform mediump float u_ratio;
@@ -68,6 +69,29 @@ void main() {
     mediump float u = 0.5 * a_direction;
     mediump float t = 1.0 - abs(u);
     mediump vec2 offset2 = offset * a_extrude * scale * normal.y * mat2(t, -u, u, t);
+
+    mat2 drehung = mat2(0,1,-1,0);
+    // float cutting_radius = 20.0;
+
+    if(abs(cutting_radius) > abs(offset)){
+
+      if(cutting_radius > 0.0){
+        float cutting_distance = -1.0 * sqrt( cutting_radius * cutting_radius - abs(offset) * abs(offset) );
+
+        vec2 move = cutting_distance * (a_extrude * drehung) * scale * normal.y * mat2(t, -u, u, t);
+
+        pos = pos + move / u_ratio;
+      }
+
+      if(cutting_radius < 0.0){
+        float cutting_distance = sqrt( cutting_radius * cutting_radius - abs(offset) * abs(offset) );
+
+        vec2 move = cutting_distance * (a_extrude * drehung) * scale * normal.y * mat2(t, -u, u, t);
+
+        pos = pos + move / u_ratio;
+      }
+
+    }
 
     vec4 projected_extrude = u_matrix * vec4(dist / u_ratio, 0.0, 0.0);
     gl_Position = u_matrix * vec4(pos + offset2 / u_ratio, 0.0, 1.0) + projected_extrude;

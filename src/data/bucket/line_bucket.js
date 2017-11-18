@@ -53,7 +53,8 @@ const MAX_LINE_DISTANCE = Math.pow(2, LINE_DISTANCE_BUFFER_BITS - 1) / LINE_DIST
 const lineInterface = {
     layoutAttributes: [
         {name: 'a_pos_normal', components: 4, type: 'Int16'},
-        {name: 'a_data', components: 4, type: 'Uint8'}
+        {name: 'a_data', components: 4, type: 'Uint8'},
+        {name: 'cutting_radius', components: 1, type: 'Float32'}
     ],
     paintAttributes: [
         {property: 'line-color'},
@@ -67,7 +68,7 @@ const lineInterface = {
     indexArrayType: TriangleIndexArray
 };
 
-function addLineVertex(layoutVertexBuffer, point: Point, extrude: Point, round: boolean, up: boolean, dir: number, linesofar: number) {
+function addLineVertex(layoutVertexBuffer, point: Point, extrude: Point, round: boolean, up: boolean, dir: number, linesofar: number, cutting_radius: number) {
     layoutVertexBuffer.emplaceBack(
         // a_pos_normal
         point.x,
@@ -84,7 +85,9 @@ function addLineVertex(layoutVertexBuffer, point: Point, extrude: Point, round: 
         // the `w` component. `linesofar` is scaled down by `LINE_DISTANCE_SCALE` so that
         // we can store longer distances while sacrificing precision.
         ((dir === 0 ? 0 : (dir < 0 ? -1 : 1)) + 1) | (((linesofar * LINE_DISTANCE_SCALE) & 0x3F) << 2),
-        (linesofar * LINE_DISTANCE_SCALE) >> 6);
+        (linesofar * LINE_DISTANCE_SCALE) >> 6,
+        cutting_radius || 0.0
+      );
 }
 
 const LayoutVertexArrayType = createVertexArrayType(lineInterface.layoutAttributes);
@@ -169,16 +172,18 @@ class LineBucket implements Bucket {
     addFeature(feature: VectorTileFeature, geometry: Array<Array<Point>>) {
         const layout = this.layers[0].layout;
         const join = this.layers[0].getLayoutValue('line-join', {zoom: this.zoom}, feature);
+        const start_cutting_radius = this.layers[0].getLayoutValue('line-start-cutting-radius', {zoom: this.zoom}, feature);
+        const end_cutting_radius = this.layers[0].getLayoutValue('line-end-cutting-radius', {zoom: this.zoom}, feature);
         const cap = layout['line-cap'];
         const miterLimit = layout['line-miter-limit'];
         const roundLimit = layout['line-round-limit'];
 
         for (const line of geometry) {
-            this.addLine(line, feature, join, cap, miterLimit, roundLimit);
+            this.addLine(line, feature, join, cap, miterLimit, roundLimit, start_cutting_radius, end_cutting_radius);
         }
     }
 
-    addLine(vertices: Array<Point>, feature: VectorTileFeature, join: string, cap: string, miterLimit: number, roundLimit: number) {
+    addLine(vertices: Array<Point>, feature: VectorTileFeature, join: string, cap: string, miterLimit: number, roundLimit: number, start_cutting_radius: number, end_cutting_radius: number) {
         const isPolygon = vectorTileFeatureTypes[feature.type] === 'Polygon';
 
         // If the line has duplicate vertices at the ends, adjust start/length to remove them.
@@ -408,6 +413,16 @@ class LineBucket implements Bucket {
             } else if (currentJoin === 'round') {
 
                 if (!startOfLine) {
+                  if(!middleVertex && !nextVertex){
+                    // Close previous segment with butt
+                    this.addCurrentVertex(currentVertex, this.distance, prevNormal, 0, 0, false, segment, -end_cutting_radius);
+
+                    // Add round cap or linejoin at end of segment
+                    this.addCurrentVertex(currentVertex, this.distance, prevNormal, 1, 1, true, segment, -end_cutting_radius);
+
+                    // The segment is done. Unset vertices to disconnect segments.
+                    this.e1 = this.e2 = -1;
+                  }else {
                     // Close previous segment with butt
                     this.addCurrentVertex(currentVertex, this.distance, prevNormal, 0, 0, false, segment);
 
@@ -416,15 +431,23 @@ class LineBucket implements Bucket {
 
                     // The segment is done. Unset vertices to disconnect segments.
                     this.e1 = this.e2 = -1;
+                  }
                 }
 
 
                 // Start next segment with a butt
                 if (nextVertex) {
+                  if(startOfLine){
+                    // Add round cap before first segment
+                    this.addCurrentVertex(currentVertex, this.distance, nextNormal, -1, -1, true, segment, start_cutting_radius);
+
+                    this.addCurrentVertex(currentVertex, this.distance, nextNormal, 0, 0, false, segment, start_cutting_radius);
+                  }else{
                     // Add round cap before first segment
                     this.addCurrentVertex(currentVertex, this.distance, nextNormal, -1, -1, true, segment);
 
                     this.addCurrentVertex(currentVertex, this.distance, nextNormal, 0, 0, false, segment);
+                  }
                 }
             }
 
@@ -460,14 +483,16 @@ class LineBucket implements Bucket {
                      endLeft: number,
                      endRight: number,
                      round: boolean,
-                     segment: Segment) {
+                     segment: Segment,
+                     cutting_radius: number
+                   ) {
         let extrude;
         const layoutVertexArray = this.layoutVertexArray;
         const indexArray = this.indexArray;
 
         extrude = normal.clone();
         if (endLeft) extrude._sub(normal.perp()._mult(endLeft));
-        addLineVertex(layoutVertexArray, currentVertex, extrude, round, false, endLeft, distance);
+        addLineVertex(layoutVertexArray, currentVertex, extrude, round, false, endLeft, distance, cutting_radius);
         this.e3 = segment.vertexLength++;
         if (this.e1 >= 0 && this.e2 >= 0) {
             indexArray.emplaceBack(this.e1, this.e2, this.e3);
@@ -478,7 +503,7 @@ class LineBucket implements Bucket {
 
         extrude = normal.mult(-1);
         if (endRight) extrude._sub(normal.perp()._mult(endRight));
-        addLineVertex(layoutVertexArray, currentVertex, extrude, round, true, -endRight, distance);
+        addLineVertex(layoutVertexArray, currentVertex, extrude, round, true, -endRight, distance, cutting_radius);
         this.e3 = segment.vertexLength++;
         if (this.e1 >= 0 && this.e2 >= 0) {
             indexArray.emplaceBack(this.e1, this.e2, this.e3);
@@ -493,7 +518,7 @@ class LineBucket implements Bucket {
         // to `linesofar`.
         if (distance > MAX_LINE_DISTANCE / 2) {
             this.distance = 0;
-            this.addCurrentVertex(currentVertex, this.distance, normal, endLeft, endRight, round, segment);
+            this.addCurrentVertex(currentVertex, this.distance, normal, endLeft, endRight, round, segment, cutting_radius);
         }
     }
 
