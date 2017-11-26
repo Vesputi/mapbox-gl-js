@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapbox GL JS debug page</title>
+    <meta charset='utf-8'>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel='stylesheet' href='/dist/mapbox-gl.css' />
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map { height: 100%; }
+    </style>
+</head>
+
+<body>
+<div id='map'></div>
+
+<script src='/dist/mapbox-gl-dev.js'></script>
+<script src='/debug/access_token_generated.js'></script>
+<script>
+
+var map = window.map = new mapboxgl.Map({
+    container: 'map',
+    zoom: 3,
+    center: [-77.01866, 38.888],
+    style: 'mapbox://styles/mapbox/streets-v9',
+    hash: true
+});
+
+map.addControl(new mapboxgl.NavigationControl());
+map.addControl(new mapboxgl.GeolocateControl());
+
+var degree2radians = function(degree){
+  return (degree * Math.PI) / 180;
+}
+
+var radians2degree = function(radians){
+  return (radians * 180) / Math.PI;
+}
+
+map.on('load', function() {
+
+    map.addSource('crossover_positions', {
+        "type": "geojson",
+        "data": "/test/integration/data/crossovers.geojson"
+    });
+
+    map.addSource('segments', {
+        "type": "geojson",
+        "data": "/test/integration/data/segments.geojson"
+    });
+
+    var offset_and_angle_to_line_properties = function(angle_in, offset_in, angle_out, offset_out){
+      var angle_north_to_offset_in = degree2radians(angle_in) - Math.asin(offset_in / radius);
+      var angle_north_to_offset_out = degree2radians(angle_out) + Math.asin(-1.0*offset_out / radius);
+      var angle_of_line = angle_north_to_offset_out - (angle_north_to_offset_out-angle_north_to_offset_in)/2;
+      var offset_of_line = Math.cos(angle_north_to_offset_out - angle_of_line)*radius;
+      return {angle: radians2degree(angle_of_line) - 90, offset: -1.0*offset_of_line}
+    }
+
+
+    // var addition = 12;
+    var offset_in = 0;
+    var angle_in = 0;
+    var offset_out = 0;
+    var angle_out = 90;
+    var radius = 20;
+
+    var line_properties = offset_and_angle_to_line_properties(angle_in, offset_in, angle_out, offset_out);
+
+    // map.addLayer({
+    //   id: 'segment_route_real_crossover_debug',
+    //   type: 'circle',
+    //   source: 'crossover_positions',
+    //   paint:{
+    //     'circle-radius': {
+    //       type: 'identity',
+    //       property: 'radius'
+    //     },
+    //     'circle-opacity': 0.3,
+    //     'circle-color': "white"
+    //   }
+    // });
+
+    map.addLayer(
+      {
+        "id":"segment_route_topogram_tram",
+        "type":"line",
+        "source":"segments",
+        "layout":{
+          "line-cap":"round",
+          "line-start-cutting-radius":{
+            "type":"identity",
+            "property":"start_cutting_radius"
+          },
+          "line-end-cutting-radius":{
+            "type":"identity",
+            "property":"end_cutting_radius"
+          },
+        },
+        "paint":{
+          'line-dasharray' : [0, 1.5],
+          "line-color":{
+            "type":"identity",
+            "property":"route_color"
+          },
+          "line-offset":{
+            "type":"identity",
+            "property":"route_offset_normal"
+          },
+          "line-width":{
+            "type":"identity",
+            "property":"route_width_normal"
+          },
+        }
+      }
+    );
+
+    // map.addLayer(
+    //   {
+    //     "id":"segment_route_topogram_tram_name",
+    //     "type":"symbol",
+    //     "source":"segments",
+    //     "layout":{
+    //       "text-field":"{id}",
+    //       "text-allow-overlap": true,
+    //     },
+    //   }
+    // );
+
+    map.addLayer({
+      id: "crossover_line",
+      type: 'fixed-line',
+      source: 'crossover_positions',
+      paint: {
+        "fixed-line-stroke-width":{
+          type: 'identity',
+          property: 'line_width'
+        },
+        "fixed-line-radius":{
+          type: 'identity',
+          property: 'radius'
+        },
+        "fixed-line-offset":{
+          type: 'identity',
+          property: 'line_offset'
+        },
+        "fixed-line-angle":{
+          type: 'identity',
+          property: 'line_angle'
+        },
+        "fixed-line-color":{
+          type: 'identity',
+          property: 'line_color'
+        }
+      }
+    });
+
+
+});
+
+</script>
+</body>
+</html>
